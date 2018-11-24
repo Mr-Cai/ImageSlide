@@ -1,4 +1,4 @@
-package com.cycleimage;
+package auto.image;
 
 import android.content.Context;
 import android.os.Handler;
@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+import com.image.R;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -68,11 +69,10 @@ public class CycleViewPager extends FrameLayout implements ViewPager.OnPageChang
     }
 
     private void initView() {
-        LayoutInflater.from(context).inflate(R.layout.layout_cycle_view, this, true);
-        viewPager = findViewById(R.id.cycle_view_pager);
-        titleTxT = findViewById(R.id.cycle_title);
-        indicatorIcon = findViewById(R.id.cycle_indicator);
-
+        LayoutInflater.from(context).inflate(R.layout.auto_image, this, true);
+        viewPager = findViewById(R.id.autoPager);
+        titleTxT = findViewById(R.id.titleTxT);
+        indicatorIcon = findViewById(R.id.indicatorLayout);
         handler = new Handler(msg -> {
             if (msg.what == working && views.size() > 0) {
                 if (!isScrolling) { //当前为非滚动状态，切换到下一页

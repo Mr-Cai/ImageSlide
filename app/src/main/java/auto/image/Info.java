@@ -1,4 +1,4 @@
-package com.cycleimage;
+package auto.image;
 
 /**
  * Created by Gavin on 2016/8/31.

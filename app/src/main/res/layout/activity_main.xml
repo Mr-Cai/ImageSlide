@@ -5,9 +5,9 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.cycleimage.MainActivity">
+        tools:context="auto.image.MainActivity">
 
-    <com.cycleimage.CycleViewPager
+    <auto.image.CycleViewPager
             android:id="@+id/cycle_view"
             android:layout_width="0dp"
             android:layout_height="200dp"

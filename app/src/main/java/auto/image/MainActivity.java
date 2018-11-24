@@ -1,19 +1,20 @@
-package com.cycleimage;
+package auto.image;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.image.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static android.widget.RelativeLayout.LayoutParams.MATCH_PARENT;
-
 
 public class MainActivity extends AppCompatActivity {
     List<Info> mList = new ArrayList<>(); //模拟请求后得到的数据
@@ -23,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
         initData();
         initView();
     }
@@ -55,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         imageView.setLayoutParams(layoutParams);
-        //使用Picasso来加载图片
         Picasso.with(context).load(url).into(imageView);
         rl.addView(imageView);
         return rl;
