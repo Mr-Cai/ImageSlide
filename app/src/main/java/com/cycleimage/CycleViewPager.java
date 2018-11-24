@@ -2,9 +2,7 @@ package com.cycleimage;
 
 import android.content.Context;
 import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,60 +12,32 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Gavin on 2016/8/31.
- */
-public class CycleViewPager extends FrameLayout
-        implements ViewPager.OnPageChangeListener {
-
-    private static final String TAG = "CycleViewPager";
+public class CycleViewPager extends FrameLayout implements ViewPager.OnPageChangeListener {
     private Context mContext;
-
     private ViewPager mViewPager;//实现轮播图的ViewPager
-
     private TextView mTitle;//标题
-
     private LinearLayout mIndicatorLayout; // 指示器
-
     private Handler handler;//每几秒后执行下一张的切换
-
     private int WHEEL = 100; // 转动
-
     private int WHEEL_WAIT = 101; // 等待
-
     private List<View> mViews = new ArrayList<>(); //需要轮播的View，数量为轮播图数量+2
-
     private ImageView[] mIndicators;    //指示器小圆点
-
-
     private boolean isScrolling = false; // 滚动框是否滚动着
-
     private boolean isCycle = true; // 是否循环，默认为true
-
     private boolean isWheel = true; // 是否轮播，默认为true
-
     private int delay = 4000; // 默认轮播时间
-
     private int mCurrentPosition = 0; // 轮播当前位置
-
     private long releaseTime = 0; // 手指松开、页面不滚动时间，防止手机松开后短时间进行切换
-
-    private ViewPagerAdapter mAdapter;
-
     private ImageCycleViewListener mImageCycleViewListener;
-
-    private List<Info> infos;//数据集合
-
+    private List<Info> resources;//数据集合
     private int mIndicatorSelected;//指示器图片，被选择状态
-
     private int mIndicatorUnselected;//指示器图片，未被选择状态
-
     final Runnable runnable = new Runnable() {
-
         @Override
         public void run() {
             if (mContext != null && isWheel) {
@@ -96,46 +66,32 @@ public class CycleViewPager extends FrameLayout
         initView();
     }
 
-    /**
-     * 初始化View
-     */
     private void initView() {
         LayoutInflater.from(mContext).inflate(R.layout.layout_cycle_view, this, true);
-        mViewPager = (ViewPager) findViewById(R.id.cycle_view_pager);
-        mTitle = (TextView) findViewById(R.id.cycle_title);
-        mIndicatorLayout = (LinearLayout) findViewById(R.id.cycle_indicator);
+        mViewPager = findViewById(R.id.cycle_view_pager);
+        mTitle = findViewById(R.id.cycle_title);
+        mIndicatorLayout = findViewById(R.id.cycle_indicator);
 
-        handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                if (msg.what == WHEEL && mViews.size() > 0) {
-                    if (!isScrolling) {
-                        //当前为非滚动状态，切换到下一页
-                        int posttion = (mCurrentPosition + 1) % mViews.size();
-                        mViewPager.setCurrentItem(posttion, true);
-                    }
-                    releaseTime = System.currentTimeMillis();
-                    handler.removeCallbacks(runnable);
-                    handler.postDelayed(runnable, delay);
-                    return;
-
+        handler = new Handler(msg -> {
+            if (msg.what == WHEEL && mViews.size() > 0) {
+                if (!isScrolling) {
+                    //当前为非滚动状态，切换到下一页
+                    int position = (mCurrentPosition + 1) % mViews.size();
+                    mViewPager.setCurrentItem(position, true);
                 }
-                if (msg.what == WHEEL_WAIT && mViews.size() > 0) {
-                    handler.removeCallbacks(runnable);
-                    handler.postDelayed(runnable, delay);
-                }
+                releaseTime = System.currentTimeMillis();
+                handler.removeCallbacks(runnable);
+                handler.postDelayed(runnable, delay);
             }
-        };
+            if (msg.what == WHEEL_WAIT && mViews.size() > 0) {
+                handler.removeCallbacks(runnable);
+                handler.postDelayed(runnable, delay);
+            }
+            return false;
+        });
     }
 
-    /**
-     * 设置指示器图片，在setData之前调用
-     *
-     * @param select   选中时的图片
-     * @param unselect 未选中时的图片
-     */
-    public void setIndicators(int select, int unselect) {
+    public void setIndicators(int select, int unselect) { //设置指示器,在显示图片之前调用
         mIndicatorSelected = select;
         mIndicatorUnselected = unselect;
     }
@@ -144,15 +100,8 @@ public class CycleViewPager extends FrameLayout
         setData(list, listener, 0);
     }
 
-
-    /**
-     * 初始化viewpager
-     *
-     * @param list         要显示的数据
-     * @param showPosition 默认显示位置
-     */
+    //初始化分页器
     public void setData(List<Info> list, ImageCycleViewListener listener, int showPosition) {
-
         if (list == null || list.size() == 0) {
             //没有数据时隐藏整个布局
             this.setVisibility(View.GONE);
@@ -160,27 +109,23 @@ public class CycleViewPager extends FrameLayout
         }
 
         mViews.clear();
-        infos = list;
+        resources = list;
 
-        if (isCycle) {
-            //添加轮播图View，数量为集合数+2
-            // 将最后一个View添加进来
-            mViews.add(getImageView(mContext, infos.get(infos.size() - 1).getUrl()));
-            for (int i = 0; i < infos.size(); i++) {
-                mViews.add(getImageView(mContext, infos.get(i).getUrl()));
+        if (isCycle) {  //添加轮播图View，数量为集合数+2,将最后一个View添加进来
+            mViews.add(getImageView(mContext, resources.get(resources.size() - 1).getUrl()));
+            for (int i = 0; i < resources.size(); i++) {
+                mViews.add(getImageView(mContext, resources.get(i).getUrl()));
             }
-            // 将第一个View添加进来
-            mViews.add(getImageView(mContext, infos.get(0).getUrl()));
+            mViews.add(getImageView(mContext, resources.get(0).getUrl()));  // 将第一个View添加进来
         } else {
-            //只添加对应数量的View
-            for (int i = 0; i < infos.size(); i++) {
-                mViews.add(getImageView(mContext, infos.get(i).getUrl()));
+
+            for (int i = 0; i < resources.size(); i++) { //只添加对应数量的View
+                mViews.add(getImageView(mContext, resources.get(i).getUrl()));
             }
         }
 
 
-        if (mViews == null || mViews.size() == 0) {
-            //没有View时隐藏整个布局
+        if (mViews == null || mViews.size() == 0) { //没有图片资源时隐藏整个布局
             this.setVisibility(View.GONE);
             return;
         }
@@ -188,7 +133,6 @@ public class CycleViewPager extends FrameLayout
         mImageCycleViewListener = listener;
 
         int ivSize = mViews.size();
-
         // 设置指示器
         mIndicators = new ImageView[ivSize];
         if (isCycle)
@@ -203,11 +147,8 @@ public class CycleViewPager extends FrameLayout
             mIndicatorLayout.addView(mIndicators[i]);
         }
 
-        mAdapter = new ViewPagerAdapter();
-
-        // 默认指向第一项，下方viewPager.setCurrentItem将触发重新计算指示器指向
-        setIndicator(0);
-
+        ViewPagerAdapter mAdapter = new ViewPagerAdapter();
+        setIndicator(0); //默认指示器位置
         mViewPager.setOffscreenPageLimit(3);
         mViewPager.addOnPageChangeListener(this);
         mViewPager.setAdapter(mAdapter);
@@ -217,50 +158,23 @@ public class CycleViewPager extends FrameLayout
             showPosition = showPosition + 1;
         }
         mViewPager.setCurrentItem(showPosition);
-
         setWheel(true);//设置轮播
     }
 
-    /**
-     * 获取轮播图View
-     *
-     * @param context
-     * @param url
-     */
-    private View getImageView(Context context, String url) {
+    private View getImageView(Context context, String url) { //获取轮播图视图
         return MainActivity.getImageView(context, url);
     }
 
-    /**
-     * 设置指示器，和文字内容
-     *
-     * @param selectedPosition 默认指示器位置
-     */
-    private void setIndicator(int selectedPosition) {
-        setText(mTitle, infos.get(selectedPosition).getTitle());
-        try {
-
-            for (int i = 0; i < mIndicators.length; i++) {
-                mIndicators[i]
-                        .setBackgroundResource(mIndicatorUnselected);
-            }
-            if (mIndicators.length > selectedPosition)
-                mIndicators[selectedPosition]
-                        .setBackgroundResource(mIndicatorSelected);
-        } catch (Exception e) {
-            Log.i(TAG, "指示器路径不正确");
+    private void setIndicator(int selectedPosition) { //设置指示器和标题文字
+        setText(mTitle, resources.get(selectedPosition).getTitle());
+        for (ImageView mIndicator : mIndicators) {
+            mIndicator.setBackgroundResource(mIndicatorUnselected);
         }
+        if (mIndicators.length > selectedPosition)
+            mIndicators[selectedPosition].setBackgroundResource(mIndicatorSelected);
     }
 
-
-
-
-    /**
-     * 页面适配器 返回对应的view
-     *
-     * @author Yuedong Li
-     */
-    private class ViewPagerAdapter extends PagerAdapter {
+    private class ViewPagerAdapter extends PagerAdapter { //页面适配器,返回对应页面
 
         @Override
         public int getCount() {
@@ -268,33 +182,28 @@ public class CycleViewPager extends FrameLayout
         }
 
         @Override
-        public boolean isViewFromObject(View arg0, Object arg1) {
+        public boolean isViewFromObject(@NotNull View arg0, @NotNull Object arg1) {
             return arg0 == arg1;
         }
 
         @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
+        public void destroyItem(@NotNull ViewGroup container, int position, @NotNull Object object) {
             container.removeView((View) object);
         }
 
+        @NotNull
         @Override
-        public View instantiateItem(ViewGroup container, final int position) {
+        public View instantiateItem(@NotNull ViewGroup container, final int position) {
             View v = mViews.get(position);
             if (mImageCycleViewListener != null) {
-                v.setOnClickListener(new OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        mImageCycleViewListener.onImageClick(infos.get(mCurrentPosition - 1), mCurrentPosition, v);
-                    }
-                });
+                v.setOnClickListener(v1 -> mImageCycleViewListener.onImageClick(resources.get(mCurrentPosition - 1), mCurrentPosition, v1));
             }
             container.addView(v);
             return v;
         }
 
         @Override
-        public int getItemPosition(Object object) {
+        public int getItemPosition(@NotNull Object object) {
             return POSITION_NONE;
         }
     }
@@ -310,13 +219,10 @@ public class CycleViewPager extends FrameLayout
         int position = arg0;
         mCurrentPosition = arg0;
         if (isCycle) {
-            if (arg0 == 0) {
-
-                //滚动到mView的1个（界面上的最后一个），将mCurrentPosition设置为max - 1
+            if (arg0 == 0) { //第一张图滑动到末尾位置
                 mCurrentPosition = max - 1;
             } else if (arg0 == max) {
-                //滚动到mView的最后一个（界面上的第一个），将mCurrentPosition设置为1
-                mCurrentPosition = 1;
+                mCurrentPosition = 1; //从最后一张图滑动到初始位置
             }
             position = mCurrentPosition - 1;
         }
@@ -325,64 +231,21 @@ public class CycleViewPager extends FrameLayout
 
     @Override
     public void onPageScrollStateChanged(int state) {
-        if (state == 1) { // viewPager在滚动
+        if (state == 1) { //正在轮播
             isScrolling = true;
             return;
-        } else if (state == 0) { // viewPager滚动结束
-
+        } else if (state == 0) { //轮播结束
             releaseTime = System.currentTimeMillis();
-            //跳转到第mCurrentPosition个页面（没有动画效果，实际效果页面上没变化）
-            mViewPager.setCurrentItem(mCurrentPosition, false);
-
+            mViewPager.setCurrentItem(mCurrentPosition, false); //设置为当前图片
         }
         isScrolling = false;
     }
 
-    /**
-     * 为textview设置文字
-     *
-     * @param textView
-     * @param text
-     */
-    public static void setText(TextView textView, String text) {
+    public static void setText(TextView textView, String text) { //设置文字
         if (text != null && textView != null) textView.setText(text);
     }
 
-    /**
-     * 为textview设置文字
-     *
-     * @param textView
-     * @param text
-     */
-    public static void setText(TextView textView, int text) {
-        if (textView != null) setText(textView, text + "");
-    }
-
-    /**
-     * 是否循环，默认开启。必须在setData前调用
-     *
-     * @param isCycle 是否循环
-     */
-    public void setCycle(boolean isCycle) {
-        this.isCycle = isCycle;
-    }
-
-
-    /**
-     * 是否处于循环状态
-     *
-     * @return
-     */
-    public boolean isCycle() {
-        return isCycle;
-    }
-
-    /**
-     * 设置是否轮播，默认轮播,轮播一定是循环的
-     *
-     * @param isWheel
-     */
-    public void setWheel(boolean isWheel) {
+    public void setWheel(boolean isWheel) { //设置是否轮播
         this.isWheel = isWheel;
         isCycle = true;
         if (isWheel) {
@@ -390,46 +253,11 @@ public class CycleViewPager extends FrameLayout
         }
     }
 
-
-    /**
-     * 刷新数据，当外部视图更新后，通知刷新数据
-     */
-    public void refreshData() {
-        if (mAdapter != null)
-            mAdapter.notifyDataSetChanged();
-    }
-
-    /**
-     * 是否处于轮播状态
-     *
-     * @return
-     */
-    public boolean isWheel() {
-        return isWheel;
-    }
-
-    /**
-     * 设置轮播暂停时间,单位毫秒（默认4000毫秒）
-     * @param delay
-     */
-    public void setDelay(int delay) {
+    public void setDelay(int delay) { //设置轮播间隔
         this.delay = delay;
     }
 
-    /**
-     * 轮播控件的监听事件
-     *
-     * @author minking
-     */
-    public static interface ImageCycleViewListener {
-
-        /**
-         * 单击图片事件
-         *
-         * @param info
-         * @param position
-         * @param imageView
-         */
-        public void onImageClick(Info info, int position, View imageView);
+    public interface ImageCycleViewListener { //点击图片监听
+        void onImageClick(Info info, int position, View imageView);
     }
 }
